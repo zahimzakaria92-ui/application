@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Switch Accounts</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg-page: #0a0a0a;
+      --bg-modal: #262626;
+      --bg-hover: #333333;
+      --border: #404040;
+      --text: #f5f5f5;
+      --muted: #a8a8a8;
+      --accent: #0095f6;
+      --check: #0095f6;
+      --white: #ffffff;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg-page);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* blurred instagram bg */
+    .bg-blur {
+      position: fixed;
+      inset: 0;
+      background: url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&q=60') center/cover;
+      filter: blur(12px) brightness(0.3);
+      transform: scale(1.1);
+    }
+
+    /* ── Trigger ── */
+    .trigger {
+      position: relative;
+      z-index: 1;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.15);
+      color: var(--white);
+      font-size: 14px;
+      font-weight: 600;
+      padding: 10px 22px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background 0.2s;
+    }
+    .trigger:hover { background: rgba(255,255,255,0.14); }
+
+    /* ── Overlay ── */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.65);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s;
+      padding: 20px;
+    }
+    .overlay.open { opacity: 1; pointer-events: all; }
+
+    /* ── Modal ── */
+    .modal {
+      background: var(--bg-modal);
+      border-radius: 16px;
+      width: 100%;
+      max-width: 420px;
+      overflow: hidden;
+      transform: scale(0.94) translateY(10px);
+      transition: transform 0.3s cubic-bezier(0.34, 1.4, 0.64, 1);
+      box-shadow: 0 24px 80px rgba(0,0,0,0.8);
+    }
+    .overlay.open .modal { transform: scale(1) translateY(0); }
+
+    /* header */
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px 20px;
+      position: relative;
+      border-bottom: 1px solid var(--border);
+    }
+    .modal-header h2 {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .close-btn {
+      position: absolute;
+      left: 16px;
+      width: 30px; height: 30px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text);
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 50%;
+      transition: background 0.15s;
+    }
+    .close-btn:hover { background: var(--bg-hover); }
+    .close-btn svg { width: 18px; height: 18px; }
+
+    /* ── Account rows ── */
+    .accounts { padding: 8px 0; }
+
+    .account-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 10px 20px;
+      cursor: pointer;
+      transition: background 0.12s;
+      position: relative;
+    }
+    .account-row:hover { background: var(--bg-hover); }
+
+    /* avatar */
+    .avatar-wrap {
+      position: relative;
+      flex-shrink: 0;
+      cursor: pointer;
+    }
+    .avatar {
+      width: 52px; height: 52px;
+      border-radius: 50%;
+      object-fit: cover;
+      background: #555;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px;
+      border: 2px solid var(--border);
+      overflow: hidden;
+      transition: border-color 0.2s;
+    }
+    .avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+    .avatar-wrap:hover .avatar { border-color: var(--accent); }
+
+    /* camera overlay on avatar */
+    .cam-overlay {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background: rgba(0,0,0,0.45);
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    .avatar-wrap:hover .cam-overlay { opacity: 1; }
+    .cam-overlay svg { width: 18px; height: 18px; color: #fff; }
+
+    /* info */
+    .row-info { flex: 1; min-width: 0; }
+    .row-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .row-sub {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    /* check */
+    .check-wrap {
+      flex-shrink: 0;
+      width: 26px; height: 26px;
+      border-radius: 50%;
+      background: var(--check);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .check-wrap svg { width: 14px; height: 14px; color: #fff; }
+
+    /* ── Log into another ── */
+    .add-account {
+      border-top: 1px solid var(--border);
+      padding: 16px 20px;
+      text-align: center;
+      cursor: pointer;
+    }
+    .add-account span {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--accent);
+      transition: opacity 0.15s;
+    }
+    .add-account:hover span { opacity: 0.75; }
+
+    /* ── hidden file input ── */
+    #fileInput { display: none; }
+
+    /* ── Photo picker sheet ── */
+    .sheet-bg {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      z-index: 200;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      padding: 0;
+    }
+    .sheet-bg.open { opacity: 1; pointer-events: all; }
+    .sheet {
+      background: var(--bg-modal);
+      width: 100%;
+      max-width: 420px;
+      border-radius: 16px 16px 0 0;
+      overflow: hidden;
+      transform: translateY(100%);
+      transition: transform 0.35s cubic-bezier(0.34,1.2,0.64,1);
+    }
+    .sheet-bg.open .sheet { transform: translateY(0); }
+    .sheet-handle {
+      width: 36px; height: 4px;
+      background: var(--border);
+      border-radius: 2px;
+      margin: 12px auto 4px;
+    }
+    .sheet-title {
+      text-align: center;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+      padding: 8px 20px 14px;
+      border-bottom: 1px solid var(--border);
+    }
+    .sheet-option {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 16px 24px;
+      cursor: pointer;
+      border-bottom: 1px solid var(--border);
+      transition: background 0.12s;
+    }
+    .sheet-option:last-child { border-bottom: none; }
+    .sheet-option:hover { background: var(--bg-hover); }
+    .sheet-option svg { width: 22px; height: 22px; color: var(--text); flex-shrink: 0; }
+    .sheet-option span { font-size: 15px; color: var(--text); }
+    .sheet-option.danger svg,
+    .sheet-option.danger span { color: #ed4956; }
+
+    /* ── Toast ── */
+    .toast {
+      position: fixed;
+      bottom: 28px;
+      left: 50%;
+      transform: translateX(-50%) translateY(60px);
+      background: #f5f5f5;
+      color: #111;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 10px 20px;
+      border-radius: 8px;
+      z-index: 300;
+      transition: transform 0.4s cubic-bezier(0.34,1.4,0.64,1);
+      white-space: nowrap;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+  </style>
+</head>
+<body>
+
+<div class="bg-blur"></div>
+
+<button class="trigger" onclick="openModal()">Switch Accounts</button>
+
+<!-- Main modal -->
+<div class="overlay" id="overlay" onclick="handleOverlay(event)">
+  <div class="modal" id="modal">
+
+    <div class="modal-header">
+      <h2>Switch accounts</h2>
+      <button class="close-btn" onclick="closeModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M18 6 6 18M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="accounts" id="accounts"></div>
+
+    <div class="add-account" onclick="showToast('Log in to another account')">
+      <span>Log into another Account</span>
+    </div>
+
+  </div>
+</div>
+
+<!-- Photo options sheet -->
+<div class="sheet-bg" id="sheetBg" onclick="handleSheet(event)">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">Change Profile Photo</div>
+    <div class="sheet-option" onclick="triggerUpload()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+        <rect x="3" y="3" width="18" height="18" rx="3"/>
+        <circle cx="8.5" cy="8.5" r="1.5"/>
+        <path d="m21 15-5-5L5 21"/>
+      </svg>
+      <span>Upload from Library</span>
+    </div>
+    <div class="sheet-option" onclick="triggerUpload()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+        <circle cx="12" cy="13" r="4"/>
+      </svg>
+      <span>Take Photo</span>
+    </div>
+    <div class="sheet-option danger" onclick="removePhoto()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+        <polyline points="3 6 5 6 21 6"/>
+        <path d="M19 6l-1 14H6L5 6M10 11v6M14 11v6M9 6V4h6v2"/>
+      </svg>
+      <span>Remove Current Photo</span>
+    </div>
+    <div class="sheet-option" onclick="closeSheet()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+        <path d="M18 6 6 18M6 6l12 12"/>
+      </svg>
+      <span>Cancel</span>
+    </div>
+  </div>
+</div>
+
+<!-- Hidden file input -->
+<input type="file" id="fileInput" accept="image/*" onchange="handleFile(event)">
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+  let targetAccountId = null;
+
+  const accounts = [
+    { id: 1, name: 'ziko.99y',        sub: 'Zakaria',           emoji: '🧑', photo: null, active: true  },
+    { id: 2, name: 'mr.ya7ya._.2011', sub: 'mr.ya7ya._.2011',   emoji: '👾', photo: null, active: false },
+  ];
+
+  // ── Render ──
+  function render() {
+    const el = document.getElementById('accounts');
+    el.innerHTML = accounts.map(acc => `
+      <div class="account-row" onclick="switchAcc(${acc.id})">
+        <div class="avatar-wrap" onclick="event.stopPropagation(); openSheet(${acc.id})">
+          <div class="avatar" id="avatar-${acc.id}">
+            ${acc.photo
+              ? `<img src="${acc.photo}" alt="${acc.name}">`
+              : acc.emoji}
+          </div>
+          <div class="cam-overlay">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+              <circle cx="12" cy="13" r="4"/>
+            </svg>
+          </div>
+        </div>
+        <div class="row-info">
+          <div class="row-name">${acc.name}</div>
+          <div class="row-sub">${acc.sub}</div>
+        </div>
+        ${acc.active
+          ? `<div class="check-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                <path d="M20 6 9 17l-5-5"/>
+              </svg>
+            </div>`
+          : ''}
+      </div>
+    `).join('');
+  }
+
+  // ── Switch ──
+  function switchAcc(id) {
+    if (accounts.find(a => a.id === id)?.active) return;
+    accounts.forEach(a => a.active = (a.id === id));
+    render();
+    const name = accounts.find(a => a.id === id)?.name;
+    showToast(`Switched to ${name}`);
+  }
+
+  // ── Modal ──
+  function openModal()  { document.getElementById('overlay').classList.add('open'); }
+  function closeModal() { document.getElementById('overlay').classList.remove('open'); }
+  function handleOverlay(e) { if (e.target === document.getElementById('overlay')) closeModal(); }
+
+  // ── Sheet ──
+  function openSheet(id) {
+    targetAccountId = id;
+    document.getElementById('sheetBg').classList.add('open');
+  }
+  function closeSheet() { document.getElementById('sheetBg').classList.remove('open'); }
+  function handleSheet(e) { if (e.target === document.getElementById('sheetBg')) closeSheet(); }
+
+  // ── Photo ──
+  function triggerUpload() {
+    closeSheet();
+    document.getElementById('fileInput').click();
+  }
+
+  function handleFile(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const acc = accounts.find(a => a.id === targetAccountId);
+      if (acc) {
+        acc.photo = ev.target.result;
+        render();
+        showToast('Profile photo updated');
+      }
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  }
+
+  function removePhoto() {
+    const acc = accounts.find(a => a.id === targetAccountId);
+    if (acc) { acc.photo = null; render(); showToast('Photo removed'); }
+    closeSheet();
+  }
+
+  // ── Toast ──
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+  }
+
+  // keyboard close
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeModal(); closeSheet(); } });
+
+  render();
+</script>
+</body>
+</html>
+
