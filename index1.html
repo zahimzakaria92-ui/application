@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zakaria - Learning Tracker</title>
+    <style>
+        /* === الألوان والخلفية === */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            min-height: 100vh;
+            color: #fff;
+            padding: 20px;
+        }
+
+        /* === العنوان الرئيسي === */
+        .header {
+            text-align: center;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            background: linear-gradient(90deg, #00f5a0, #00d9f5);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            color: #888;
+            font-size: 1.1em;
+        }
+
+        /* === التاريخ والإحصائيات === */
+        .stats-bar {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .stat-box {
+            background: rgba(255,255,255,0.1);
+            border-radius: 15px;
+            padding: 15px 25px;
+            text-align: center;
+            min-width: 150px;
+        }
+
+        .stat-box .number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #00f5a0;
+        }
+
+        .stat-box .label {
+            color: #aaa;
+            font-size: 0.9em;
+        }
+
+        /* === الأقسام الرئيسية === */
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 700px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .section {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 20px;
+            padding: 25px;
+            backdrop-filter: blur(10px);
+        }
+
+        .section-title {
+            font-size: 1.4em;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* === قسم الأهداف === */
+        .goal-input-area {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .goal-input-area input {
+            flex: 1;
+            padding: 12px 15px;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+            font-size: 1em;
+            outline: none;
+        }
+
+        .goal-input-area input::placeholder {
+            color: #777;
+        }
+
+        .goal-input-area input:focus {
+            border-color: #00f5a0;
+        }
+
+        .btn-add {
+            padding: 12px 20px;
+            border-radius: 12px;
+            border: none;
+            background: linear-gradient(135deg, #00f5a0, #00d9f5);
+            color: #000;
+            font-weight: bold;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .btn-add:hover {
+            transform: scale(1.05);
+        }
+
+        /* === عناصر الأهداف === */
+        .goals-list {
+            list-style: none;
+        }
+
+        .goal-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 15px;
+            margin-bottom: 8px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .goal-item:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        .goal-item.completed {
+            opacity: 0.5;
+        }
+
+        .goal-item.completed .goal-text {
+            text-decoration: line-through;
+            color: #00f5a0;
+        }
+
+        .goal-checkbox {
+            width: 24px;
+            height: 24px;
+            border-radius: 7px;
+            border: 2px solid #555;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: all 0.3s;
+        }
+
+        .goal-item.completed .goal-checkbox {
+            background: #00f5a0;
+            border-color: #00f5a0;
+        }
+
+        .goal-text {
+            flex: 1;
+            font-size: 1em;
+        }
+
+        .goal-delete {
+            color: #ff4757;
+            cursor: pointer;
+            font-size: 1.2em;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .goal-item:hover .goal-delete {
+            opacity: 1;
+        }
+
+        /* === قسم تتبع المهارات === */
+        .skill-item {
+            margin-bottom: 20px;
+        }
+
+        .skill-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .skill-name {
+            font-size: 1em;
+            font-weight: bold;
+        }
+
+        .skill-percentage {
+            color: #00f5a0;
+            font-weight: bold;
+        }
+
+        .skill-bar-bg {
+            width: 100%;
+            height: 12px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 5px;
+        }
+
+        .skill-bar-fill {
+            height: 100%;
+            border-radius: 10px;
+            transition: width 0.5s ease;
+        }
+
+        .skill-levels {
+            display: flex;
+            gap: 5px;
+        }
+
+        .level-dot {
+            width: 30px;
+            height: 8px;
+            border-radius: 4px;
+            background: rgba(255,255,255,0.15);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .level-dot.active {
+            background: #00f5a0;
+        }
+
+        .level-dot:hover {
+            background: rgba(0, 245, 160, 0.5);
+        }
+
+        /* === قسم المواعيد === */
+        .reminder-input-area {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .reminder-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .reminder-input-area input[type="text"] {
+            flex: 1;
+            padding: 12px 15px;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+            font-size: 1em;
+            outline: none;
+        }
+
+        .reminder-input-area input[type="date"],
+        .reminder-input-area input[type="time"] {
+            padding: 10px;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+            font-size: 0.9em;
+            outline: none;
+        }
+
+        .reminder-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 15px;
+            margin-bottom: 8px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            transition: all 0.3s;
+        }
+
+        .reminder-item .reminder-icon {
+            font-size: 1.5em;
+        }
+
+        .reminder-item .reminder-info {
+            flex: 1;
+        }
+
+        .reminder-item .reminder-title {
+            font-weight: bold;
+            margin-bottom: 3px;
+        }
+
+        .reminder-item .reminder-datetime {
+            color: #aaa;
+            font-size: 0.85em;
+        }
+
+        .reminder-item.overdue {
+            border: 1px solid #ff4757;
+            background: rgba(255, 71, 87, 0.1);
+        }
+
+        .reminder-item.today {
+            border: 1px solid #ffa502;
+            background: rgba(255, 165, 2, 0.1);
+        }
+
+        .reminder-delete {
+            color: #ff4757;
+            cursor: pointer;
+            font-size: 1.2em;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .reminder-item:hover .reminder-delete {
+            opacity: 1;
+        }
+
+        /* === القسم الكامل العرض === */
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        /* === رسالة تحفيزية === */
+        .motivation {
+            text-align: center;
+            padding: 20px;
+            margin-top: 20px;
+            color: #888;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- العنوان -->
+    <div class="header">
+        <h1>🎯 Zakaria's Learning Tracker</h1>
+        <p id="currentDate"></p>
+    </div>
+
+    <!-- شريط الإحصائيات -->
+    <div class="stats-bar">
+        <div class="stat-box">
+            <div class="number" id="totalGoals">0</div>
+            <div class="label">الأهداف الكلية</div>
+        </div>
+        <div class="stat-box">
+            <div class="number" id="completedGoals">0</div>
+            <div class="label">أهداف منجزة ✅</div>
+        </div>
+        <div class="stat-box">
+            <div class="number" id="overallProgress">0%</div>
+            <div class="label">التقدم العام</div>
+        </div>
+        <div class="stat-box">
+            <div class="number" id="upcomingReminders">0</div>
+            <div class="label">مواعيد قادمة 📅</div>
+        </div>
+    </div>
+
+    <div class="container">
+
+        <!-- قسم الأهداف -->
+        <div class="section">
+            <div class="section-title">📋 أهدافي</div>
+            <div class="goal-input-area">
+                <input type="text" id="goalInput" placeholder="اكتب هدفاً جديداً..." onkeypress="if(event.key==='Enter') addGoal()">
+                <button class="btn-add" onclick="addGoal()">+</button>
+            </div>
+            <ul class="goals-list" id="goalsList"></ul>
+        </div>
+
+        <!-- قسم تتبع المهارات -->
+        <div class="section">
+            <div class="section-title">📊 تقدم المهارات</div>
+            <div id="skillsContainer"></div>
+        </div>
+
+        <!-- قسم المواعيد والتذكيرات -->
+        <div class="section full-width">
+            <div class="section-title">⏰ المواعيد والتذكيرات</div>
+            <div class="reminder-input-area">
+                <input type="text" id="reminderTitle" placeholder="عنوان الموعد (مثال: تمرين رياضيات)...">
+                <div class="reminder-row">
+                    <input type="date" id="reminderDate">
+                    <input type="time" id="reminderTime">
+                    <button class="btn-add" onclick="addReminder()">+</button>
+                </div>
+            </div>
+            <div id="remindersList"></div>
+        </div>
+
+    </div>
+
+    <!-- رسالة تحفيزية -->
+    <div class="motivation" id="motivationText"></div>
+
+    <script>
+        // ============================================
+        // البيانات الافتراضية (المهارات من دفتر زكرياء)
+        // ============================================
+        const DEFAULT_SKILLS = [
+            { name: "🐧 Linux", level: 4, color: "#ff6b6b" },
+            { name: "💻 Terminal", level: 3, color: "#ffa502" },
+            { name: "🌐 Network", level: 2, color: "#00d9f5" },
+            { name: "🧅 Tor", level: 2, color: "#a55eea" },
+            { name: "🔀 Git & GitHub", level: 3, color: "#ff4757" },
+            { name: "🐳 Docker", level: 0, color: "#2ed573" },
+            { name: "🐍 Python", level: 1, color: "#ffd43b" },
+            { name: "🛡️ Cybersecurity", level: 1, color: "#ff6348" }
+        ];
+
+        const MOTIVATIONAL_QUOTES = [
+            "كل خبير كان يوماً مبتدئاً 🌟",
+            "التعلم المستمر هو مفتاح النجاح 🔑",
+            "أنت أقرب مما تظن لتحقيق أهدافك 🎯",
+            "كل سطر كود تكتبه يقربك من حلمك 💻",
+            "الهاكر الأخلاقي يحمي العالم بمعرفته 🛡️",
+            "لا تقارن نفسك بالآخرين، قارن نفسك بالأمس 📈",
+            "المعرفة قوة، والتطبيق أقوى 💪"
+        ];
+
+        // ============================================
+        // تحميل البيانات من التخزين المحلي
+        // ============================================
+        function loadData(key, defaultValue) {
+            const saved = localStorage.getItem(key);
+            return saved ? JSON.parse(saved) : defaultValue;
+        }
+
+        function saveData(key, data) {
+            localStorage.setItem(key, JSON.stringify(data));
+        }
+
+        // ============================================
+        // تحميل البيانات عند فتح الصفحة
+        // ============================================
+        let goals = loadData('zakaria_goals', []);
+        let skills = loadData('zakaria_skills', DEFAULT_SKILLS);
+        let reminders = loadData('zakaria_reminders', []);
+
+        // ============================================
+        // عرض التاريخ الحالي
+        // ============================================
+        function showDate() {
+            const now = new Date();
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('currentDate').textContent = now.toLocaleDateString('ar-MA', options);
+        }
+
+        // ============================================
+        // قسم الأهداف
+        // ============================================
+        function addGoal() {
+            const input = document.getElementById('goalInput');
+            const text = input.value.trim();
+            if (text === '') return;
+
+            goals.push({
+                id: Date.now(),
+                text: text,
+                completed: false,
+                createdAt: new Date().toISOString()
+            });
+
+            input.value = '';
+            saveData('zakaria_goals', goals);
+            renderGoals();
+            updateStats();
+        }
+
+        function toggleGoal(id) {
+            const goal = goals.find(g => g.id === id);
+            if (goal) {
+                goal.completed = !goal.completed;
+                saveData('zakaria_goals', goals);
+                renderGoals();
+                updateStats();
+            }
+        }
+
+        function deleteGoal(id) {
+            goals = goals.filter(g => g.id !== id);
+            saveData('zakaria_goals', goals);
+            renderGoals();
+            updateStats();
+        }
+
+        function renderGoals() {
+            const list = document.getElementById('goalsList');
+            list.innerHTML = '';
+
+            goals.forEach(goal => {
+                const li = document.createElement('li');
+                li.className = `goal-item ${goal.completed ? 'completed' : ''}`;
+
+                li.innerHTML = `
+                    <div class="goal-checkbox" onclick="toggleGoal(${goal.id})">
+                        ${goal.completed ? '✓' : ''}
+                    </div>
+                    <span class="goal-text" onclick="toggleGoal(${goal.id})">${goal.text}</span>
+                    <span class="goal-delete" onclick="deleteGoal(${goal.id})">✕</span>
+                `;
+
+                list.appendChild(li);
+            });
+        }
+
+        // ============================================
+        // قسم تتبع المهارات (5 مستويات)
+        // ============================================
+        function setSkillLevel(skillIndex, level) {
+            skills[skillIndex].level = level;
+            saveData('zakaria_skills', skills);
+            renderSkills();
+            updateStats();
+        }
+
+        function renderSkills() {
+            const container = document.getElementById('skillsContainer');
+            container.innerHTML = '';
+
+            skills.forEach((skill, index) => {
+                const percentage = (skill.level / 5) * 100;
+
+                const div = document.createElement('div');
+                div.className = 'skill-item';
+
+                let levelsHTML = '';
+                for (let i = 1; i <= 5; i++) {
+                    levelsHTML += `<div class="level-dot ${i <= skill.level ? 'active' : ''}" 
+                                       onclick="setSkillLevel(${index}, ${i})"
+                                       title="المستوى ${i}"></div>`;
+                }
+
+                div.innerHTML = `
+                    <div class="skill-header">
+                        <span class="skill-name">${skill.name}</span>
+                        <span class="skill-percentage">${skill.level}/5</span>
+                    </div>
+                    <div class="skill-bar-bg">
+                        <div class="skill-bar-fill" style="width: ${percentage}%; background: ${skill.color}"></div>
+                    </div>
+                    <div class="skill-levels">${levelsHTML}</div>
+                `;
+
+                container.appendChild(div);
+            });
+        }
+
+        // ============================================
+        // قسم المواعيد والتذكيرات
+        // ============================================
+        function addReminder() {
+            const title = document.getElementById('reminderTitle').value.trim();
+            const date = document.getElementById('reminderDate').value;
+            const time = document.getElementById('reminderTime').value;
+
+            if (title === '' || date === '') return;
+
+            reminders.push({
+                id: Date.now(),
+                title: title,
+                date: date,
+                time: time || '00:00'
+            });
+
+            document.getElementById('reminderTitle').value = '';
+            document.getElementById('reminderDate').value = '';
+            document.getElementById('reminderTime').value = '';
+
+            saveData('zakaria_reminders', reminders);
+            renderReminders();
+            updateStats();
+        }
+
+        function deleteReminder(id) {
+            reminders = reminders.filter(r => r.id !== id);
+            saveData('zakaria_reminders', reminders);
+            renderReminders();
+            updateStats();
+        }
+
+        function renderReminders() {
+            const container = document.getElementById('remindersList');
+            container.innerHTML = '';
+
+            const now = new Date();
+            const today = now.toISOString().split('T')[0];
+
+            // ترتيب المواعيد حسب التاريخ
+            const sorted = [...reminders].sort((a, b) => {
+                return new Date(a.date + 'T' + a.time) - new Date(b.date + 'T' + b.time);
+            });
+
+            sorted.forEach(reminder => {
+                const reminderDate = new Date(reminder.date + 'T' + reminder.time);
+                let statusClass = '';
+                let icon = '📅';
+
+                if (reminder.date < today) {
+                    statusClass = 'overdue';
+                    icon = '⚠️';
+                } else if (reminder.date === today) {
+                    statusClass = 'today';
+                    icon = '🔔';
+                }
+
+                const div = document.createElement('div');
+                div.className = `reminder-item ${statusClass}`;
+
+                const dateObj = new Date(reminder.date);
+                const dateStr = dateObj.toLocaleDateString('ar-MA', { 
+                    weekday: 'short', month: 'short', day: 'numeric' 
+                });
+
+                div.innerHTML = `
+                    <span class="reminder-icon">${icon}</span>
+                    <div class="reminder-info">
+                        <div class="reminder-title">${reminder.title}</div>
+                        <div class="reminder-datetime">${dateStr} - ${reminder.time}</div>
+                    </div>
+                    <span class="reminder-delete" onclick="deleteReminder(${reminder.id})">✕</span>
+                `;
+
+                container.appendChild(div);
+            });
+        }
+
+        // ============================================
+        // تحديث الإحصائيات
+        // ============================================
+        function updateStats() {
+            const total = goals.length;
+            const completed = goals.filter(g => g.completed).length;
+            const totalSkillLevels = skills.reduce((sum, s) => sum + s.level, 0);
+            const maxSkillLevels = skills.length * 5;
+            const progress = maxSkillLevels > 0 ? Math.round((totalSkillLevels / maxSkillLevels) * 100) : 0;
+
+            const today = new Date().toISOString().split('T')[0];
+            const upcoming = reminders.filter(r => r.date >= today).length;
+
+            document.getElementById('totalGoals').textContent = total;
+            document.getElementById('completedGoals').textContent = completed;
+            document.getElementById('overallProgress').textContent = progress + '%';
+            document.getElementById('upcomingReminders').textContent = upcoming;
+        }
+
+        // ============================================
+        // رسالة تحفيزية عشوائية
+        // ============================================
+        function showMotivation() {
+            const random = Math.floor(Math.random() * MOTIVATIONAL_QUOTES.length);
+            document.getElementById('motivationText').textContent = MOTIVATIONAL_QUOTES[random];
+        }
+
+        // ============================================
+        // تشغيل كل شيء عند فتح الصفحة
+        // ============================================
+        showDate();
+        renderGoals();
+        renderSkills();
+        renderReminders();
+        updateStats();
+        showMotivation();
+    </script>
+
+</body>
+</html>
